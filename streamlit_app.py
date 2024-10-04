@@ -17,6 +17,8 @@ except:
     pass
 
 # Global Variables
+st.set_page_config(layout="wide")
+
 if not 'key_incr' in st.session_state.keys():
     st.session_state.key_num = 0
 
@@ -184,7 +186,9 @@ def convert_to_tree(paths):
 # Example usage
 if __name__=='__main__':
 
-    st.title("🎈 Laura's Reading List...")
+    col1,col2,col3 = st.columns([1,2,1])
+    with col2:
+        st.title("🎈 Laura's Reading List...")
     
     dbx = dropbox_client()
     list_files = list_files_in_dropbox(dbx)
@@ -192,9 +196,14 @@ if __name__=='__main__':
     list_files = [file.replace('File: ','') for file in list_files]
     tree = convert_to_tree(list_files)
     
-    display_tree(tree)
+    col1,col2,col3 = st.columns([10,1,10])
     
-    st.markdown(st.session_state.disp_text)
+    with col1:
+        
+        display_tree(tree)
+    with col3:
+        st.title("")
+        st.markdown(st.session_state.disp_text)
 
 
 
