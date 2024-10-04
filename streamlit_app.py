@@ -1,14 +1,15 @@
 import streamlit as st
 
 import os
-
+import json
 import streamlit as st
 import dropbox
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key, find_dotenv
 import os
 from os.path import join, dirname
 from io import BytesIO
 from docx import Document
+import requests
 try:
     dotenv_path = join(dirname(__file__), '.env')
     load_dotenv(dotenv_path)
@@ -56,11 +57,52 @@ def list_files_in_dropbox(dbx,path='',list_files=[]):
 def dropbox_client():
     """Creates a dropbox client"""
     
-    api_key = os.getenv("DROPBOX_KEY")
-
-    dbx = dropbox.Dropbox(api_key)
+    api_key = os.getenv("DROPBOX_ACCESS_TOKEN")
+    
+    try:
+        dbx = dropbox.Dropbox(api_key)
+    except:
+        refresh_token = get_refresh_token()
+        dbx = dropbox.Dropbox(app_key = api_key,
+                          app_secret = os.getenv("DROPBOX_APP_SECRET"),
+                          oauth2_refresh_token = refresh_token)
     
     return dbx
+
+def get_refresh_token():
+    """Gets the dropbox refresh token"""
+    
+    app_key = os.getenv("DROPBOX_APP_KEY")
+    app_secret = os.getenv("DROPBOX_APP_SECRET")
+    authorization_code='b2ys6W_AO5UAAAAAAAAm_egqn1mQzVADZn9vtQGwPPM'
+    
+    # build the authorization URL:
+    authorization_url = "https://www.dropbox.com/oauth2/authorize?client_id=%s&response_type=code" % app_key
+    
+    # send the user to the authorization URL:
+    print('Go to the following URL and allow access:')
+    print(authorization_url)
+    
+    # get the authorization code from the user:
+    # authorization_code = raw_input('Enter the code:\n')
+    
+    # exchange the authorization code for an access token:
+    token_url = "https://api.dropboxapi.com/oauth2/token"
+    params = {
+        "code": authorization_code,
+        "grant_type": "authorization_code",
+        "client_id": app_key,
+        "client_secret": app_secret
+    }
+    r = requests.post(token_url, data=params)
+    print(r.text)
+    
+    text_dic = json.loads(r.text)
+    new_access_token = text_dic['access_token']
+    
+    set_key(find_dotenv(), "DROPBOX_ACCESS_TOKEN", new_access_token)
+    
+    return new_access_token
 
 def read_file_from_dropbox(dbx,file_path):
     # Create a Dropbox client using the access token
@@ -138,17 +180,27 @@ def convert_to_tree(paths):
     return tree
 
 # Example usage
-st.title("🎈 Laura's Reading List...")
+if __name__=='__main__':
+    dbx = dropbox_client()
+    
+    list_files = list_files_in_dropbox(dbx)
+    list_files = [file[1:] for file in list_files]
+    list_files = [file.replace('File: ','') for file in list_files]
+    tree = convert_to_tree(list_files)
+    
+# else:
 
-dbx = dropbox_client()
-list_files = list_files_in_dropbox(dbx)
-list_files = [file[1:] for file in list_files]
-list_files = [file.replace('File: ','') for file in list_files]
-tree = convert_to_tree(list_files)
-
-display_tree(tree)
-
-st.markdown(st.session_state.disp_text)
+#     st.title("🎈 Laura's Reading List...")
+    
+#     dbx = dropbox_client()
+#     list_files = list_files_in_dropbox(dbx)
+#     list_files = [file[1:] for file in list_files]
+#     list_files = [file.replace('File: ','') for file in list_files]
+#     tree = convert_to_tree(list_files)
+    
+#     display_tree(tree)
+    
+#     st.markdown(st.session_state.disp_text)
 
 
 
