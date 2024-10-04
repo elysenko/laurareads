@@ -181,26 +181,18 @@ def convert_to_tree(paths):
 
 # Example usage
 if __name__=='__main__':
-    dbx = dropbox_client()
+
+    st.title("🎈 Laura's Reading List...")
     
+    dbx = dropbox_client()
     list_files = list_files_in_dropbox(dbx)
     list_files = [file[1:] for file in list_files]
     list_files = [file.replace('File: ','') for file in list_files]
     tree = convert_to_tree(list_files)
     
-# else:
-
-#     st.title("🎈 Laura's Reading List...")
+    display_tree(tree)
     
-#     dbx = dropbox_client()
-#     list_files = list_files_in_dropbox(dbx)
-#     list_files = [file[1:] for file in list_files]
-#     list_files = [file.replace('File: ','') for file in list_files]
-#     tree = convert_to_tree(list_files)
-    
-#     display_tree(tree)
-    
-#     st.markdown(st.session_state.disp_text)
+    st.markdown(st.session_state.disp_text)
 
 
 
