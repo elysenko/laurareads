@@ -76,7 +76,7 @@ def get_refresh_token():
     
     app_key = os.getenv("DROPBOX_APP_KEY")
     app_secret = os.getenv("DROPBOX_APP_SECRET")
-    authorization_code='b2ys6W_AO5UAAAAAAAAm_egqn1mQzVADZn9vtQGwPPM'
+    authorization_code=''
     
     # build the authorization URL:
     authorization_url = "https://www.dropbox.com/oauth2/authorize?client_id=%s&response_type=code" % app_key
