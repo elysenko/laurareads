@@ -132,6 +132,11 @@ def read_docx_from_bytesio(file_like_object):
     return "\n".join(content)
 
 
+def button_swap(full_path):
+    st.session_state[full_path] = not st.session_state[full_path]
+    
+    return
+
 # Recursive function to display the folder tree
 def display_tree(tree, current_path=''):
     for key, value in tree.items():
@@ -148,7 +153,7 @@ def display_tree(tree, current_path=''):
                 st.session_state[full_path] = False
                 
             # Display the button with the current expansion state
-            if st.button(f"📁 {key} {'🔽' if st.session_state[full_path] else '▶️'}", key=path_key):
+            if st.button(f"📁 {key} {'🔽' if st.session_state[full_path] else '▶️'}", on_click=button_swap,args=(full_path,)):
                 # Toggle the expanded state for the folder
                 st.session_state[full_path] = not st.session_state[full_path]
             
