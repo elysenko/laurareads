@@ -202,7 +202,6 @@ if __name__=='__main__':
         
         display_tree(tree)
     with col3:
-        st.title("")
         st.markdown(st.session_state.disp_text)
 
 
