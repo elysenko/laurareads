@@ -196,7 +196,7 @@ if __name__=='__main__':
     list_files = [file.replace('File: ','') for file in list_files]
     tree = convert_to_tree(list_files)
     
-    col1,col2,col3 = st.columns([10,1,10])
+    col1,col2,col3 = st.columns([3,1,8])
     
     with col1:
         
