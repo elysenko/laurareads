@@ -142,11 +142,12 @@ def display_tree(tree, current_path=''):
                 handle_file_click(full_path)
                 
         else:  # It's a folder
-            is_expanded = st.session_state.get(full_path, False)  # Check if the folder is expanded
+            if not full_path in st.session_state:
+                st.session_state[full_path] = False
+            is_expanded = st.session_state.get(full_path)  # Check if the folder is expanded
             if st.button(f"📁 {key} {'🔽' if is_expanded else '▶️'}", key=path_key):
                 # Toggle expanded state for the folder
-                st.session_state[full_path] = not is_expanded
-                st.session_state.key_num += 1
+                st.session_state[full_path] = not st.session_state[full_path]
 
             # If folder is expanded, recursively display its contents
             if is_expanded:
