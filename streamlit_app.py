@@ -142,17 +142,18 @@ def display_tree(tree, current_path=''):
                 handle_file_click(full_path)
                 
         else:  # It's a folder
-            if not full_path in st.session_state:
+            if full_path not in st.session_state:
                 st.session_state[full_path] = False
-            is_expanded = st.session_state.get(full_path)  # Check if the folder is expanded
-            if st.button(f"📁 {key} {'🔽' if is_expanded else '▶️'}", key=path_key):
-                # Toggle expanded state for the folder
-                st.session_state[full_path] = not is_expanded
-                is_expanded = st.session_state.get(full_path)
-            # If folder is expanded, recursively display its contents
-            if is_expanded:
+                
+            # Display the button with the current expansion state
+            if st.button(f"📁 {key} {'🔽' if st.session_state[full_path] else '▶️'}", key=path_key):
+                # Toggle the expanded state for the folder
+                st.session_state[full_path] = not st.session_state[full_path]
+            
+            # If the folder is expanded, recursively display its contents
+            if st.session_state[full_path]:
                 display_tree(value, full_path)
-
+            
 # Callback function when a file is clicked
 def handle_file_click(file_path):
     dbx = dropbox_client()
