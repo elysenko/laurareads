@@ -9,7 +9,9 @@ import os
 from os.path import join, dirname
 from io import BytesIO
 from docx import Document
+import string
 import requests
+
 try:
     dotenv_path = join(dirname(__file__), '.env')
     load_dotenv(dotenv_path)
@@ -24,6 +26,9 @@ if not 'key_incr' in st.session_state.keys():
 
 if not 'disp_text' in st.session_state.keys():
     st.session_state.disp_text = ''
+    
+if not 'doc' in st.session_state:
+    st.session_state.doc = None
 
 # Functions
 def list_files_in_dropbox(dbx,path='',list_files=[]):
@@ -61,13 +66,14 @@ def dropbox_client():
     
     api_key = os.getenv("DROPBOX_ACCESS_TOKEN")
     
+    # refresh_token = get_refresh_token()
+    
     try:
         dbx = dropbox.Dropbox(api_key)
     except:
-        refresh_token = get_refresh_token()
         dbx = dropbox.Dropbox(app_key = api_key,
                           app_secret = os.getenv("DROPBOX_APP_SECRET"),
-                          oauth2_refresh_token = refresh_token)
+                          oauth2_refresh_token = os.getenv("DROPBOX_ACCESS_TOKEN"))
     
     return dbx
 
@@ -76,7 +82,7 @@ def get_refresh_token():
     
     app_key = os.getenv("DROPBOX_APP_KEY")
     app_secret = os.getenv("DROPBOX_APP_SECRET")
-    authorization_code=''
+    authorization_code='b2ys6W_AO5UAAAAAAAAnAirhCqOpV3kZCE7WHZtD-gE'
     
     # build the authorization URL:
     authorization_url = "https://www.dropbox.com/oauth2/authorize?client_id=%s&response_type=code" % app_key
@@ -103,8 +109,9 @@ def get_refresh_token():
     new_access_token = text_dic['access_token']
     
     set_key(find_dotenv(), "DROPBOX_ACCESS_TOKEN", new_access_token)
+    set_key(find_dotenv(), "DROPBOX_AUTH_CODE", authorization_code)
     
-    return new_access_token
+    return 
 
 def read_file_from_dropbox(dbx,file_path):
     # Create a Dropbox client using the access token
@@ -115,9 +122,10 @@ def read_file_from_dropbox(dbx,file_path):
         # For example, if this was a binary file (like an image or PDF), you could save it to disk:
         with BytesIO(response.content) as stream:
             try:
-                text_content = read_docx_from_bytesio(stream)
+                doc = read_docx_from_bytesio(stream)
+                return doc 
             except:
-                text_conten = 'CANNOT OPEN FILE...'    
+                text_content = 'CANNOT OPEN FILE...'    
         return text_content
 
     except dropbox.exceptions.ApiError as err:
@@ -126,11 +134,37 @@ def read_file_from_dropbox(dbx,file_path):
     
 def read_docx_from_bytesio(file_like_object):
     doc = Document(file_like_object)  # Use the BytesIO object
-    content = []
-    for para in doc.paragraphs:
-        content.append(para.text)  # Extract text from each paragraph
-    return "\n".join(content)
-
+    
+    return doc 
+def display_text(doc=None):
+    
+    if not doc is None:
+        # Extract headings to create a TOC
+        toc = []
+        for para in doc.paragraphs:
+            if para.style.name.startswith('Heading'):
+                toc.append((para.style.name, para.text))
+        
+        # Display TOC in Streamlit
+        st.sidebar.title('Table of Contents')
+        for style, heading in toc:
+            heading = heading.translate(str.maketrans('', '', string.punctuation)).strip()
+            st.sidebar.markdown(f"- [{heading}](#{heading.replace(' ', '-').lower()})")
+        
+        # Display the document content
+        all_text = '/n'.join([para.text for para in doc.paragraphs])
+        if not st.session_state.disp_text == all_text:
+        
+            st.title("Document Content")
+            for para in doc.paragraphs:
+                if para.style.name.startswith('Heading'):
+                    heading = para.text
+                    heading = heading.translate(str.maketrans('', '', string.punctuation)).strip()
+                    st.markdown(f"## {heading.lower()}")
+                else:
+                    st.write(para.text)
+            
+            st.session_state.disp_text = ''
 
 def button_swap(full_path):
     st.session_state[full_path] = not st.session_state[full_path]
@@ -146,7 +180,7 @@ def display_tree(tree, current_path=''):
         
         if value is None:  # It's a file
             if st.button(f"📄 {key}", key=path_key):
-                handle_file_click(full_path)
+                st.session_state.doc = handle_file_click(full_path)
                 
         else:  # It's a folder
             if full_path not in st.session_state:
@@ -164,14 +198,11 @@ def handle_file_click(file_path):
     dbx = dropbox_client()
     full_file_path = '/' + file_path
     
-    text = read_file_from_dropbox(dbx,full_file_path)
+    doc = read_file_from_dropbox(dbx,full_file_path)
     
-    if st.session_state.disp_text == text:
-        st.session_state.disp_text = ''
-    else:
-        st.session_state.disp_text = text
     
-    return 
+    
+    return doc
 
 # Function to convert flat structure into a tree
 def convert_to_tree(paths):
@@ -205,7 +236,7 @@ if __name__=='__main__':
         
         display_tree(tree)
     with col3:
-        st.markdown(st.session_state.disp_text)
+        display_text(st.session_state.doc)
 
 
 
