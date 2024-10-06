@@ -148,7 +148,7 @@ def display_text(doc=None):
         # Display TOC in Streamlit
         st.sidebar.title('Table of Contents')
         for style, heading in toc:
-            heading = heading.translate(str.maketrans('', '', string.punctuation)).strip()
+            heading = heading.translate(str.maketrans('', '', string.punctuation)).replace('  ',' ').strip()
             st.sidebar.markdown(f"- [{heading}](#{heading.replace(' ', '-').lower()})")
         
         # Display the document content
@@ -159,7 +159,7 @@ def display_text(doc=None):
             for para in doc.paragraphs:
                 if para.style.name.startswith('Heading'):
                     heading = para.text
-                    heading = heading.translate(str.maketrans('', '', string.punctuation)).strip()
+                    heading = heading.translate(str.maketrans('', '', string.punctuation)).replace('  ',' ').strip()
                     st.markdown(f"## {heading.lower()}")
                 else:
                     st.write(para.text)
