@@ -29,6 +29,9 @@ if not 'disp_text' in st.session_state.keys():
     
 if not 'doc' in st.session_state:
     st.session_state.doc = None
+    
+if not 'filename' in st.session_state:
+    st.session_state.filename = ''
 
 # Functions
 def list_files_in_dropbox(dbx,path='',list_files=[]):
@@ -136,7 +139,7 @@ def read_docx_from_bytesio(file_like_object):
     doc = Document(file_like_object)  # Use the BytesIO object
     
     return doc 
-def display_text(doc=None):
+def display_text(doc=None,filename=''):
     
     if not doc is None:
         # Extract headings to create a TOC
@@ -155,14 +158,21 @@ def display_text(doc=None):
         all_text = '/n'.join([para.text for para in doc.paragraphs])
         if not st.session_state.disp_text == all_text:
         
-            st.title("Document Content")
+            st.title(filename.split('.')[0])
+            i = len(toc)
+            
             for para in doc.paragraphs:
-                if para.style.name.startswith('Heading'):
-                    heading = para.text
-                    heading = heading.translate(str.maketrans('', '', string.punctuation)).replace('  ',' ').strip()
-                    st.markdown(f"## {heading.lower()}")
+                if i < len(toc) -10:
+                    i += 1
                 else:
-                    st.write(para.text)
+                    if para.style.name.startswith('Heading'):
+                        heading = para.text
+                        heading = heading.translate(str.maketrans('', '', string.punctuation)).replace('  ',' ').lower().strip()
+                        st.markdown(f"## {heading}")
+                    elif para.style.name.startswith("Folder:"):
+                        pass
+                    else:
+                        st.write(para.text)
             
             st.session_state.disp_text = ''
 
@@ -196,6 +206,9 @@ def display_tree(tree, current_path=''):
 # Callback function when a file is clicked
 def handle_file_click(file_path):
     dbx = dropbox_client()
+    print('file_path: (next)')
+    print(file_path)
+    st.session_state.filename = file_path.split('/')[-1]
     full_file_path = '/' + file_path
     
     doc = read_file_from_dropbox(dbx,full_file_path)
@@ -236,7 +249,7 @@ if __name__=='__main__':
         
         display_tree(tree)
     with col3:
-        display_text(st.session_state.doc)
+        display_text(st.session_state.doc,st.session_state.filename)
 
 
 
