@@ -1,11 +1,9 @@
 import streamlit as st
-
 import os
 import json
 import streamlit as st
 import dropbox
 from dotenv import load_dotenv, set_key, find_dotenv
-import os
 from os.path import join, dirname
 from io import BytesIO
 from docx import Document
@@ -14,9 +12,9 @@ import requests
 
 try:
     dotenv_path = join(dirname(__file__), '.env')
-    load_dotenv(dotenv_path)
+    load_dotenv(dotenv_path,verbose=True, override=True)
 except:
-    pass
+    load_dotenv(verbose=True, override=True)
 
 # Global Variables
 st.set_page_config(layout="wide")
@@ -67,33 +65,35 @@ def list_files_in_dropbox(dbx,path='',list_files=[]):
 def dropbox_client():
     """Creates a dropbox client"""
     
-    # rt = get_refresh_token()
     try:
-        api_key = os.getenv("DROPBOX_ACCESS_TOKEN")
-        dbx = dropbox.Dropbox(api_key)
+        app_key = os.getenv("DROPBOX_APP_KEY")
+        app_secret = os.getenv("DROPBOX_APP_SECRET")
+        refresh_token = os.getenv("DROPBOX_REFRESH_TOKEN")
+        dbx = dropbox.Dropbox(app_key = app_key,
+                          app_secret = app_secret,
+                          oauth2_refresh_token = refresh_token
+                          )
         status = dbx.users_get_current_account()
         account_id = status.account_id
         account_id
     except:
-        # refresh_token = get_refresh_token()
         new_api_key = get_access_token()
-        # new_api_key = dropbox.Dropbox(app_key = api_key,
-        #                   app_secret = os.getenv("DROPBOX_APP_SECRET"),
-        #                   oauth2_refresh_token = os.getenv("DROPBOX_ACCESS_TOKEN"))
         dbx = dropbox.Dropbox(new_api_key)
+        status = dbx.users_get_current_account()
+        account_id = status.account_id
+        account_id
         
     return dbx
-
 
 def get_refresh_token():
     """Gets the dropbox refresh token"""
     
     app_key = os.getenv("DROPBOX_APP_KEY")
     app_secret = os.getenv("DROPBOX_APP_SECRET")
-    refresh_token='b2ys6W_AO5UAAAAAAAAnBxxW5O3WxjXZ6JeOU-fARPU'
+    refresh_token='b2ys6W_AO5UAAAAAAAAnED7hk0bnmvgXEwJhu6MxMQY'.strip()
     
     # build the authorization URL:
-    authorization_url = "https://www.dropbox.com/oauth2/authorize?client_id=%s&response_type=code" % app_key
+    authorization_url = "https://www.dropbox.com/oauth2/authorize?client_id=%s&token_access_type=offline&response_type=code" % app_key
     
     # send the user to the authorization URL:
     print('Go to the following URL and allow access:')
@@ -117,20 +117,25 @@ def get_access_token():
     # exchange the authorization code for an access token:
     token_url = "https://api.dropboxapi.com/oauth2/token"
     params = {
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
+        "grant_type": "authorization_code",
+        "code": refresh_token,
         "client_id": app_key,
         "client_secret": app_secret,
     }
     r = requests.post(token_url, data=params)
     print(r.text)
     
-    text_dic = json.loads(r.text)
-    new_access_token = text_dic['access_token']
-    
-    set_key(find_dotenv(), "DROPBOX_ACCESS_TOKEN", new_access_token)
-    
-    return new_access_token
+    if r.status_code == 200:
+        text_dic = json.loads(r.text)
+        new_access_token = text_dic['access_token']
+        new_refresh_token = text_dic['refresh_token']
+        
+        set_key(find_dotenv(), "DROPBOX_ACCESS_TOKEN", new_access_token)
+        set_key(find_dotenv(), "DROPBOX_REFRESH_TOKEN", new_refresh_token)
+        
+        return new_access_token
+    else:
+        print("cannot get new access_totken")
 
 def read_file_from_dropbox(dbx,file_path):
     # Create a Dropbox client using the access token
