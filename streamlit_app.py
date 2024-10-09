@@ -74,15 +74,11 @@ def dropbox_client():
                           oauth2_refresh_token = refresh_token
                           )
         status = dbx.users_get_current_account()
-        account_id = status.account_id
-        account_id
     except:
 
         new_api_key = get_access_token()
         dbx = dropbox.Dropbox(new_api_key)
         status = dbx.users_get_current_account()
-        account_id = status.account_id
-        account_id
 
     return dbx
 
