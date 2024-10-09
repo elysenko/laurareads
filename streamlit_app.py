@@ -77,12 +77,13 @@ def dropbox_client():
         account_id = status.account_id
         account_id
     except:
+
         new_api_key = get_access_token()
         dbx = dropbox.Dropbox(new_api_key)
         status = dbx.users_get_current_account()
         account_id = status.account_id
         account_id
-        
+
     return dbx
 
 def get_refresh_token():
@@ -90,6 +91,7 @@ def get_refresh_token():
     
     app_key = os.getenv("DROPBOX_APP_KEY")
     app_secret = os.getenv("DROPBOX_APP_SECRET")
+
     refresh_token='b2ys6W_AO5UAAAAAAAAnED7hk0bnmvgXEwJhu6MxMQY'.strip()
     
     # build the authorization URL:
@@ -124,7 +126,7 @@ def get_access_token():
     }
     r = requests.post(token_url, data=params)
     print(r.text)
-    
+
     if r.status_code == 200:
         text_dic = json.loads(r.text)
         new_access_token = text_dic['access_token']
@@ -233,9 +235,7 @@ def handle_file_click(file_path):
     full_file_path = '/' + file_path
     
     doc = read_file_from_dropbox(dbx,full_file_path)
-    
-    
-    
+
     return doc
 
 # Function to convert flat structure into a tree
