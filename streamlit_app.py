@@ -202,10 +202,11 @@ def button_swap(full_path):
 
 # Recursive function to display the folder tree
 def display_tree(tree, current_path=''):
-    for key, value in tree.items():
+    for key, value in sorted(tree.items()):
         # Create full path for current item
         full_path = f"{current_path}/{key}" if current_path else key
         path_key = f'{full_path}_{st.session_state.key_num}'
+        
         
         if value is None:  # It's a file
             if st.button(f"📄 {key}", key=path_key):
